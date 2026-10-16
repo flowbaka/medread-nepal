@@ -1,0 +1,1 @@
+"""MedRead Nepal Application Package."""

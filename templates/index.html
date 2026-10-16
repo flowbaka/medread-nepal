@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="ne">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MedRead Nepal — औषधि पहिचान तथा आवाज प्रणाली</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --border: #334155;
+      --text: #f8fafc;
+      --muted: #cbd5e1;
+      --accent: #38bdf8;
+      --accent-dark: #0284c7;
+      --safe-bg: #064e3b;
+      --safe-border: #10b981;
+      --warn-bg: #78350f;
+      --warn-border: #f59e0b;
+      --danger-bg: #7f1d1d;
+      --danger-border: #ef4444;
+    }
+
+    body.high-contrast {
+      --bg: #000000;
+      --card: #0a0a0a;
+      --border: #ffff00;
+      --text: #ffff00;
+      --muted: #ffffff;
+      --accent: #ffff00;
+      --accent-dark: #ffd000;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 1.25rem;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      padding-bottom: 1.25rem;
+      border-bottom: 2px solid var(--border);
+      margin-bottom: 1.5rem;
+    }
+
+    .title-group h1 {
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .title-group p {
+      font-size: 1.15rem;
+      color: var(--muted);
+    }
+
+    .contrast-btn {
+      background: var(--card);
+      color: var(--text);
+      border: 2px solid var(--accent);
+      padding: 0.75rem 1.25rem;
+      font-size: 1.05rem;
+      font-weight: 700;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+
+    .card {
+      background: var(--card);
+      border: 2px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .card h2 {
+      font-size: 1.45rem;
+      margin-bottom: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    label.big-label {
+      display: block;
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: var(--muted);
+    }
+
+    select.big-select {
+      width: 100%;
+      padding: 0.95rem 1rem;
+      font-size: 1.2rem;
+      font-weight: 600;
+      border-radius: 12px;
+      border: 2px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      margin-bottom: 0.5rem;
+    }
+
+    .upload-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    @media (max-width: 640px) {
+      .upload-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .big-action-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      background: var(--accent-dark);
+      color: #ffffff;
+      border: 3px solid var(--accent);
+      border-radius: 16px;
+      padding: 1.5rem 1rem;
+      font-size: 1.35rem;
+      font-weight: 800;
+      cursor: pointer;
+      text-align: center;
+      transition: transform 0.1s ease;
+    }
+
+    body.high-contrast .big-action-btn {
+      background: #ffff00;
+      color: #000000;
+    }
+
+    .big-action-btn:active {
+      transform: scale(0.98);
+    }
+
+    .sample-pills {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0.75rem;
+      margin-top: 0.75rem;
+    }
+
+    .sample-btn {
+      background: var(--bg);
+      color: var(--text);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 0.9rem;
+      font-size: 1.05rem;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: left;
+      transition: border-color 0.15s;
+    }
+
+    .sample-btn:hover {
+      border-color: var(--accent);
+    }
+
+    /* Status Banner */
+    .status-banner {
+      border-radius: 16px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      border: 4px solid transparent;
+    }
+
+    .status-SAFE {
+      background: var(--safe-bg);
+      border-color: var(--safe-border);
+    }
+
+    .status-WARNING_VERIFY {
+      background: var(--warn-bg);
+      border-color: var(--warn-border);
+    }
+
+    .status-DANGER {
+      background: var(--danger-bg);
+      border-color: var(--danger-border);
+    }
+
+    .status-header {
+      font-size: 1.75rem;
+      font-weight: 900;
+      margin-bottom: 0.5rem;
+    }
+
+    .audio-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      align-items: center;
+      margin: 1.25rem 0;
+    }
+
+    .speak-btn {
+      flex: 1;
+      min-width: 240px;
+      background: #10b981;
+      color: #000000;
+      border: 3px solid #ffffff;
+      padding: 1.15rem 1.5rem;
+      font-size: 1.4rem;
+      font-weight: 900;
+      border-radius: 14px;
+      cursor: pointer;
+    }
+
+    .details-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .detail-box {
+      background: var(--bg);
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      padding: 1.15rem;
+    }
+
+    .detail-label {
+      font-size: 1rem;
+      color: var(--muted);
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .detail-value-ne {
+      font-size: 1.65rem;
+      font-weight: 900;
+      margin-top: 0.25rem;
+      color: #38bdf8;
+    }
+
+    body.high-contrast .detail-value-ne {
+      color: #ffff00;
+    }
+
+    .detail-value-en {
+      font-size: 1.15rem;
+      color: var(--muted);
+      margin-top: 0.15rem;
+    }
+
+    .flags-list {
+      list-style: none;
+      margin-top: 0.85rem;
+    }
+
+    .flags-list li {
+      font-size: 1.25rem;
+      font-weight: 700;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid rgba(255,255,255,0.15);
+    }
+
+    .preview-container {
+      margin-top: 1.25rem;
+      text-align: center;
+    }
+
+    .preview-container img {
+      max-width: 100%;
+      max-height: 360px;
+      border-radius: 12px;
+      border: 3px solid var(--border);
+    }
+
+    #loadingOverlay {
+      display: none;
+      text-align: center;
+      padding: 2rem;
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="title-group">
+      <h1>💊 MedRead Nepal (औषधि वाचक)</h1>
+      <p>जेष्ठ नागरिक तथा कम देख्ने व्यक्तिहरूका लागि औषधिको नाम, मात्रा र म्याद पढेर सुनाउने प्रणाली</p>
+    </div>
+    <button class="contrast-btn" onclick="document.body.classList.toggle('high-contrast')">
+      👁️ High Contrast (ठूलो रङ)
+    </button>
+  </header>
+
+  <!-- Step 1: Optional Expected Medicine Selection -->
+  <section class="card" aria-label="Expected Medicine">
+    <h2>१. तपाईंले कुन औषधि खान लाग्नुभएको छ? (Compare Expected Medicine)</h2>
+    <label class="big-label" for="expectedMedSelect">
+      तपाईंको नियमित औषधि छान्नुहोस् (वा खाली छोड्नुहोस्):
+    </label>
+    <select id="expectedMedSelect" class="big-select">
+      <option value="">-- कुनै पनि छानिएको छैन (जुसुकै औषधि पढ्नुहोस्) --</option>
+      {% for med in medicines %}
+      <option value="{{ med.id }}">
+        {{ med.name_ne }} — {{ med.brand_en }} ({{ med.default_strength }}) [{{ med.purpose_ne }}]
+      </option>
+      {% endfor %}
+    </select>
+  </section>
+
+  <!-- Step 2: Camera Capture or File Upload -->
+  <section class="card" aria-label="Scan Medicine">
+    <h2>२. औषधिको बट्टा वा पत्ताको फोटो खिच्नुहोस् (Photograph Label)</h2>
+    <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none" onchange="handleFileUpload(this.files[0])" />
+    <input type="file" id="galleryInput" accept="image/*" style="display:none" onchange="handleFileUpload(this.files[0])" />
+
+    <div class="upload-grid">
+      <button class="big-action-btn" onclick="document.getElementById('cameraInput').click()">
+        <span>📷 क्यामेरा खोल्नुहोस्</span>
+        <span style="font-size:1rem; font-weight:600;">Take Photo of Medicine Box</span>
+      </button>
+      <button class="big-action-btn" onclick="document.getElementById('galleryInput').click()">
+        <span>🖼️ फोटो छान्नुहोस्</span>
+        <span style="font-size:1rem; font-weight:600;">Upload Medicine Image</span>
+      </button>
+    </div>
+
+    <div style="margin-top: 1.5rem;">
+      <p class="big-label">🧪 परीक्षणका लागि नमुना औषधिहरू (Instant Demo Samples):</p>
+      <div class="sample-pills">
+        <button class="sample-btn" onclick="runSample('cetamol')">
+          ✅ <strong>Cetamol 500 mg</strong><br/>
+          <small>सफा फोटो (Valid 08/2028)</small>
+        </button>
+        <button class="sample-btn" onclick="runSample('amlod')">
+          ✅ <strong>Amlod 5 mg (प्रेसर)</strong><br/>
+          <small>सफा फोटो (Valid 11/2027)</small>
+        </button>
+        <button class="sample-btn" onclick="runSample('expired')">
+          🚨 <strong>Pantop 40 mg (म्याद सकिएको)</strong><br/>
+          <small>Expired 02/2024 Warning</small>
+        </button>
+        <button class="sample-btn" onclick="runSample('blurry')">
+          ⚠️ <strong>धमिलो पत्ता (Blurry Photo)</strong><br/>
+          <small>Human Verification Flag</small>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Loading Indicator -->
+  <div id="loadingOverlay" class="card">
+    ⏳ औषधिको अक्षर पढिँदैछ र नेपाली आवाज तयार हुँदैछ... कृपया पर्खनुहोस्...<br/>
+    <small>Running Computer Vision OCR & Nepali Voice Synthesis...</small>
+  </div>
+
+  <!-- Step 3: Results & Spoken Nepali Output -->
+  <section id="resultSection" style="display:none;">
+    <div id="statusBanner" class="status-banner">
+      <div id="statusHeader" class="status-header"></div>
+      <p id="spokenTextNe" style="font-size: 1.45rem; font-weight: 700; margin-top: 0.5rem;"></p>
+      <p id="spokenTextEn" style="font-size: 1.1rem; color: var(--muted); margin-top: 0.35rem;"></p>
+      <ul id="flagsList" class="flags-list"></ul>
+    </div>
+
+    <div class="audio-bar">
+      <button class="speak-btn" onclick="replayNepaliVoice()">
+        🔊 नेपालीमा फेरि सुन्नुहोस् (Speak Aloud in Nepali)
+      </button>
+      <audio id="nepaliAudioPlayer" controls style="height: 54px;"></audio>
+    </div>
+
+    <div class="card">
+      <h2>📋 औषधिको विवरण (Extracted Package Information)</h2>
+      <div class="details-grid">
+        <div class="detail-box">
+          <div class="detail-label">औषधिको नाम (Medicine Name)</div>
+          <div id="resNameNe" class="detail-value-ne"></div>
+          <div id="resNameEn" class="detail-value-en"></div>
+        </div>
+        <div class="detail-box">
+          <div class="detail-label">मात्रा / शक्ति (Strength)</div>
+          <div id="resStrengthNe" class="detail-value-ne"></div>
+          <div id="resStrengthEn" class="detail-value-en"></div>
+        </div>
+        <div class="detail-box">
+          <div class="detail-label">म्याद सकिने मिति (Expiry Date)</div>
+          <div id="resExpiryNe" class="detail-value-ne"></div>
+          <div id="resExpiryEn" class="detail-value-en"></div>
+        </div>
+        <div class="detail-box">
+          <div class="detail-label">केका लागि प्रयोग हुन्छ? (Purpose & Confidence)</div>
+          <div id="resPurposeNe" class="detail-value-ne" style="font-size:1.3rem;"></div>
+          <div id="resConf" class="detail-value-en"></div>
+        </div>
+      </div>
+
+      <div class="preview-container">
+        <p class="big-label" style="margin-bottom:0.5rem;">🔍 Computer Vision Text Detection (पहिचान गरिएको अक्षर):</p>
+        <img id="annotatedPreview" src="" alt="Annotated Medicine Package" />
+      </div>
+    </div>
+  </section>
+
+  <script>
+    let lastResult = null;
+
+    async function handleFileUpload(file) {
+      if (!file) return;
+      const expectedId = document.getElementById('expectedMedSelect').value;
+      const formData = new FormData();
+      formData.append('file', file);
+      if (expectedId) formData.append('expected_medicine_id', expectedId);
+
+      await sendScanRequest('/api/scan', formData);
+    }
+
+    async function runSample(sampleName) {
+      const expectedId = document.getElementById('expectedMedSelect').value;
+      const formData = new FormData();
+      if (expectedId) formData.append('expected_medicine_id', expectedId);
+
+      await sendScanRequest(`/api/scan-sample/${sampleName}`, formData);
+    }
+
+    async function sendScanRequest(url, formData) {
+      document.getElementById('loadingOverlay').style.display = 'block';
+      document.getElementById('resultSection').style.display = 'none';
+
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          body: formData
+        });
+        if (!response.ok) {
+          const err = await response.json();
+          alert('Error: ' + (err.detail || 'Could not process image'));
+          return;
+        }
+        const data = await response.json();
+        lastResult = data;
+        renderResult(data);
+      } catch (e) {
+        alert('Server error: ' + e.message);
+      } finally {
+        document.getElementById('loadingOverlay').style.display = 'none';
+      }
+    }
+
+    function renderResult(data) {
+      const sec = document.getElementById('resultSection');
+      sec.style.display = 'block';
+
+      const banner = document.getElementById('statusBanner');
+      banner.className = 'status-banner status-' + data.safety.status;
+
+      const header = document.getElementById('statusHeader');
+      if (data.safety.status === 'SAFE') {
+        header.textContent = '✅ सुरक्षित र स्पष्ट पहिचान (Safe & Verified Reading)';
+      } else if (data.safety.status === 'WARNING_VERIFY') {
+        header.textContent = '⚠️ ध्यान दिनुहोस्: अरू कसैलाई जाँच गर्न लगाउनुहोस् (Human Verification Required)';
+      } else {
+        header.textContent = '🚨 अति सावधान! खतरा छ — यो औषधि नखानुहोस्! (DANGER — DO NOT TAKE!)';
+      }
+
+      document.getElementById('spokenTextNe').textContent = '🗣️ "' + data.speech_ne + '"';
+      document.getElementById('spokenTextEn').textContent = data.speech_en;
+
+      const flagsList = document.getElementById('flagsList');
+      flagsList.innerHTML = '';
+      data.safety.flags_ne.forEach((flagNe, idx) => {
+        const li = document.createElement('li');
+        const flagEn = data.safety.flags_en[idx] || '';
+        li.innerHTML = `🔸 ${flagNe} <br/><small style="color:var(--muted);font-weight:500;">${flagEn}</small>`;
+        flagsList.appendChild(li);
+      });
+
+      document.getElementById('resNameNe').textContent = data.medicine_name_ne;
+      document.getElementById('resNameEn').textContent = data.medicine_name_en;
+      document.getElementById('resStrengthNe').textContent = data.strength_ne;
+      document.getElementById('resStrengthEn').textContent = data.strength_en;
+      document.getElementById('resExpiryNe').textContent = data.expiry.formatted_ne;
+      document.getElementById('resExpiryEn').textContent = 'EXP: ' + data.expiry.formatted_en;
+      document.getElementById('resPurposeNe').textContent = data.purpose_ne || 'सामान्य औषधि';
+      document.getElementById('resConf').textContent = `OCR Confidence: ${data.ocr_confidence}% | Sharpness: ${data.blur_score}`;
+
+      document.getElementById('annotatedPreview').src = data.annotated_image;
+
+      // Auto-play Nepali audio
+      replayNepaliVoice();
+      sec.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function replayNepaliVoice() {
+      if (!lastResult) return;
+      const player = document.getElementById('nepaliAudioPlayer');
+      if (lastResult.audio_url) {
+        player.src = lastResult.audio_url;
+        player.play().catch(() => fallbackBrowserSpeech(lastResult.speech_ne));
+      } else {
+        fallbackBrowserSpeech(lastResult.speech_ne);
+      }
+    }
+
+    function fallbackBrowserSpeech(textNe) {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const utter = new SpeechSynthesisUtterance(textNe);
+        utter.lang = 'ne-NP';
+        utter.rate = 0.9;
+        window.speechSynthesis.speak(utter);
+      }
+    }
+  </script>
+</body>
+</html>
