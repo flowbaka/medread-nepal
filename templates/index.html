@@ -439,9 +439,16 @@
     </div>
   </section>
 
+  <!-- Step 4: Recent Scan History -->
+  <section id="historySection" class="card" style="display:none;">
+    <h2>🕒 भर्खरै जाँच गरिएका औषधिहरू (Recent Scans)</h2>
+    <div id="historyList" class="sample-pills"></div>
+  </section>
+
   <script>
     let lastResult = null;
     let currentZoom = 1.0;
+    const scanHistory = [];
 
     function adjustZoom(factor) {
       currentZoom = Math.min(1.45, Math.max(0.85, currentZoom * factor));
@@ -482,7 +489,10 @@
         }
         const data = await response.json();
         lastResult = data;
+        scanHistory.unshift(data);
+        if (scanHistory.length > 5) scanHistory.pop();
         renderResult(data);
+        renderHistory();
       } catch (e) {
         alert('Server error: ' + e.message);
       } finally {
@@ -533,6 +543,24 @@
       // Auto-play Nepali audio
       replayNepaliVoice(1.0);
       sec.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function renderHistory() {
+      const histSec = document.getElementById('historySection');
+      const histList = document.getElementById('historyList');
+      if (scanHistory.length === 0) return;
+      histSec.style.display = 'block';
+      histList.innerHTML = '';
+      scanHistory.forEach((item, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'sample-btn';
+        btn.innerHTML = `🔊 <strong>${item.medicine_name_ne}</strong><br/><small>${item.strength_ne} | ${item.expiry.formatted_ne}</small>`;
+        btn.onclick = () => {
+          lastResult = item;
+          renderResult(item);
+        };
+        histList.appendChild(btn);
+      });
     }
 
     function replayNepaliVoice(rate = 1.0) {
