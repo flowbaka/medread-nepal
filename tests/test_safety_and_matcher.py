@@ -5,6 +5,7 @@ expiry date parsing (AD & BS calendars), and safety guardrails.
 
 import unittest
 from app.medicine_db import match_known_medicine, strength_to_nepali, to_nepali_digits
+from app.ocr_engine import extract_batch_number, extract_mfg_date, extract_mrp_price
 from app.safety import evaluate_safety_and_match, parse_expiry_date
 
 
@@ -34,6 +35,18 @@ class TestMedReadSafetyAndMatcher(unittest.TestCase):
         exp_old = parse_expiry_date("EXP: 02/2023")
         self.assertTrue(exp_old["found"])
         self.assertTrue(exp_old["is_expired"])
+
+        # Bikram Sambat (BS) calendar conversion check (2085 BS -> 2028 AD)
+        exp_bs = parse_expiry_date("B.No: AT-88 MFG: 05/2082 EXP: 05/2085")
+        self.assertTrue(exp_bs["found"])
+        self.assertEqual(exp_bs["year"], 2028)
+        self.assertFalse(exp_bs["is_expired"])
+
+    def test_batch_mfg_mrp_extraction(self):
+        raw = "B.No: NP-402   MFG: 08/2025   M.R.P. Rs. 45.00"
+        self.assertEqual(extract_batch_number(raw), "NP-402")
+        self.assertEqual(extract_mfg_date(raw), "08/2025")
+        self.assertEqual(extract_mrp_price(raw), "NPR 45.00")
 
     def test_safety_guardrails_mismatch_and_expired(self):
         exp_info = parse_expiry_date("EXP: 08/2029")
