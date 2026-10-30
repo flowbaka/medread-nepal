@@ -336,6 +336,17 @@
       </option>
       {% endfor %}
     </select>
+    <details style="margin-top: 0.75rem;">
+      <summary style="cursor:pointer; font-weight:700; color:var(--accent); font-size:1.1rem;">
+        ➕ नयाँ नियमित औषधि थप्नुहोस् (Add Custom Expected Medicine)
+      </summary>
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:0.6rem; margin-top:0.75rem;">
+        <input id="customBrandEn" type="text" placeholder="English Name (e.g. Sinex)" class="big-select" style="font-size:1rem; padding:0.65rem;" />
+        <input id="customNameNe" type="text" placeholder="नेपाली नाम (उदा: साइनेक्स)" class="big-select" style="font-size:1rem; padding:0.65rem;" />
+        <input id="customStrength" type="text" placeholder="Strength (e.g. 500 mg)" class="big-select" style="font-size:1rem; padding:0.65rem;" />
+        <button class="contrast-btn" onclick="saveCustomMedicine()" style="padding:0.65rem;">💾 Save Medicine</button>
+      </div>
+    </details>
   </section>
 
   <!-- Step 2: Camera Capture or File Upload -->
@@ -453,6 +464,32 @@
     function adjustZoom(factor) {
       currentZoom = Math.min(1.45, Math.max(0.85, currentZoom * factor));
       document.body.style.zoom = currentZoom;
+    }
+
+    async function saveCustomMedicine() {
+      const brandEn = document.getElementById('customBrandEn').value.trim();
+      const nameNe = document.getElementById('customNameNe').value.trim() || brandEn;
+      const strength = document.getElementById('customStrength').value.trim() || '500 mg';
+      if (!brandEn) {
+        alert('Please enter the medicine name.');
+        return;
+      }
+      const fd = new FormData();
+      fd.append('brand_en', brandEn);
+      fd.append('name_ne', nameNe);
+      fd.append('default_strength', strength);
+      const res = await fetch('/api/medicines', { method: 'POST', body: fd });
+      if (res.ok) {
+        const data = await res.json();
+        const sel = document.getElementById('expectedMedSelect');
+        const opt = document.createElement('option');
+        opt.value = data.medicine.id;
+        opt.textContent = `${data.medicine.name_ne} — ${data.medicine.brand_en} (${data.medicine.default_strength})`;
+        sel.appendChild(opt);
+        sel.value = data.medicine.id;
+        document.getElementById('customBrandEn').value = '';
+        document.getElementById('customNameNe').value = '';
+      }
     }
 
     async function handleFileUpload(file) {
