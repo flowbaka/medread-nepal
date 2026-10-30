@@ -309,9 +309,17 @@
       <h1>💊 MedRead Nepal (औषधि वाचक)</h1>
       <p>जेष्ठ नागरिक तथा कम देख्ने व्यक्तिहरूका लागि औषधिको नाम, मात्रा र म्याद पढेर सुनाउने प्रणाली</p>
     </div>
-    <button class="contrast-btn" onclick="document.body.classList.toggle('high-contrast')">
-      👁️ High Contrast (ठूलो रङ)
-    </button>
+    <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+      <button class="contrast-btn" onclick="adjustZoom(1.12)" title="अक्षर ठूलो पार्नुहोस्">
+        🔍+ अक्षर ठूलो (A+)
+      </button>
+      <button class="contrast-btn" onclick="adjustZoom(0.9)" title="अक्षर सानो पार्नुहोस्">
+        🔍- सानो (A-)
+      </button>
+      <button class="contrast-btn" onclick="document.body.classList.toggle('high-contrast')">
+        👁️ High Contrast (गाढा रङ)
+      </button>
+    </div>
   </header>
 
   <!-- Step 1: Optional Expected Medicine Selection -->
@@ -386,8 +394,11 @@
     </div>
 
     <div class="audio-bar">
-      <button class="speak-btn" onclick="replayNepaliVoice()">
-        🔊 नेपालीमा फेरि सुन्नुहोस् (Speak Aloud in Nepali)
+      <button class="speak-btn" onclick="replayNepaliVoice(1.0)">
+        🔊 नेपालीमा फेरि सुन्नुहोस् (Speak Aloud)
+      </button>
+      <button class="contrast-btn" onclick="replayNepaliVoice(0.75)" style="padding:1.15rem; font-size:1.15rem;">
+        🐢 बिस्तारै सुन्नुहोस् (Slow Voice)
       </button>
       <audio id="nepaliAudioPlayer" controls style="height: 54px;"></audio>
     </div>
@@ -426,6 +437,12 @@
 
   <script>
     let lastResult = null;
+    let currentZoom = 1.0;
+
+    function adjustZoom(factor) {
+      currentZoom = Math.min(1.45, Math.max(0.85, currentZoom * factor));
+      document.body.style.zoom = currentZoom;
+    }
 
     async function handleFileUpload(file) {
       if (!file) return;
@@ -504,32 +521,34 @@
       document.getElementById('resExpiryNe').textContent = data.expiry.formatted_ne;
       document.getElementById('resExpiryEn').textContent = 'EXP: ' + data.expiry.formatted_en;
       document.getElementById('resPurposeNe').textContent = data.purpose_ne || 'सामान्य औषधि';
-      document.getElementById('resConf').textContent = `OCR Confidence: ${data.ocr_confidence}% | Sharpness: ${data.blur_score}`;
+      const batchStr = data.batch_number && data.batch_number !== 'N/A' ? ` | Batch: ${data.batch_number}` : '';
+      document.getElementById('resConf').textContent = `OCR Confidence: ${data.ocr_confidence}% | Sharpness: ${data.blur_score}${batchStr}`;
 
       document.getElementById('annotatedPreview').src = data.annotated_image;
 
       // Auto-play Nepali audio
-      replayNepaliVoice();
+      replayNepaliVoice(1.0);
       sec.scrollIntoView({ behavior: 'smooth' });
     }
 
-    function replayNepaliVoice() {
+    function replayNepaliVoice(rate = 1.0) {
       if (!lastResult) return;
       const player = document.getElementById('nepaliAudioPlayer');
       if (lastResult.audio_url) {
         player.src = lastResult.audio_url;
-        player.play().catch(() => fallbackBrowserSpeech(lastResult.speech_ne));
+        player.playbackRate = rate;
+        player.play().catch(() => fallbackBrowserSpeech(lastResult.speech_ne, rate));
       } else {
-        fallbackBrowserSpeech(lastResult.speech_ne);
+        fallbackBrowserSpeech(lastResult.speech_ne, rate);
       }
     }
 
-    function fallbackBrowserSpeech(textNe) {
+    function fallbackBrowserSpeech(textNe, rate = 0.9) {
       if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
         const utter = new SpeechSynthesisUtterance(textNe);
         utter.lang = 'ne-NP';
-        utter.rate = 0.9;
+        utter.rate = rate;
         window.speechSynthesis.speak(utter);
       }
     }
