@@ -39,10 +39,11 @@ def get_easyocr_reader():
     return _EASYOCR_READER
 
 
-def assess_and_preprocess_image(image_bytes: bytes) -> Tuple[np.ndarray, np.ndarray, float]:
+def assess_and_preprocess_image(image_bytes: bytes) -> Tuple[np.ndarray, np.ndarray, float, float]:
     """
-    Decode image, compute Laplacian blur score, and apply CLAHE contrast
-    enhancement to make blister-pack text easier for OCR to read.
+    Decode image, compute Laplacian blur score and mean brightness score,
+    and apply bilateral filtering + CLAHE contrast enhancement to reduce
+    foil glare on metallic blister packs.
     """
     np_arr = np.frombuffer(image_bytes, np.uint8)
     img_bgr = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
@@ -58,13 +59,27 @@ def assess_and_preprocess_image(image_bytes: bytes) -> Tuple[np.ndarray, np.ndar
 
     gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
     blur_score = float(cv2.Laplacian(gray, cv2.CV_64F).var())
+    brightness_score = float(np.mean(gray))
+
+    # Mild edge-preserving denoising for shiny foil grain before CLAHE
+    denoised_gray = cv2.bilateralFilter(gray, d=5, sigmaColor=45, sigmaSpace=45)
 
     # Apply CLAHE (Contrast Limited Adaptive Histogram Equalization) to reduce foil glare
     clahe = cv2.createCLAHE(clipLimit=2.2, tileGridSize=(8, 8))
-    enhanced_gray = clahe.apply(gray)
+    enhanced_gray = clahe.apply(denoised_gray)
     enhanced_bgr = cv2.cvtColor(enhanced_gray, cv2.COLOR_GRAY2BGR)
 
-    return img_bgr, enhanced_bgr, round(blur_score, 1)
+    return img_bgr, enhanced_bgr, round(blur_score, 1), round(brightness_score, 1)
+
+
+def extract_batch_number(raw_text: str) -> Optional[str]:
+    """Extract Batch / Lot number (e.g., B.No: NP-402, BATCH: AM99) from label text."""
+    text_en = to_english_digits(raw_text)
+    pattern = r"(?:b\.?\s*no\.?|batch(?:\s*no\.?)?|lot)[\s:.\-]*([A-Z0-9\-]{3,14})"
+    m = re.search(pattern, text_en, flags=re.IGNORECASE)
+    if m:
+        return m.group(1).strip()
+    return None
 
 
 def extract_strength(raw_text: str) -> Optional[str]:
@@ -137,7 +152,7 @@ def process_medicine_image(
       4. Safety & human verification evaluation
       5. Nepali voice generation
     """
-    img_bgr, enhanced_bgr, blur_score = assess_and_preprocess_image(image_bytes)
+    img_bgr, enhanced_bgr, blur_score, brightness_score = assess_and_preprocess_image(image_bytes)
 
     raw_text, avg_conf, detections = run_easyocr_extraction(img_bgr, enhanced_bgr)
     annotated_img_uri = annotate_image_base64(img_bgr, detections)
@@ -145,6 +160,7 @@ def process_medicine_image(
     # Match against known Nepal medicine database
     matched_med = match_known_medicine(raw_text)
     extracted_strength = extract_strength(raw_text)
+    batch_number = extract_batch_number(raw_text)
     expiry_info = parse_expiry_date(raw_text)
 
     if matched_med:
@@ -200,8 +216,10 @@ def process_medicine_image(
         "purpose_en": purpose_en,
         "purpose_ne": purpose_ne,
         "expiry": expiry_info,
+        "batch_number": batch_number or "N/A",
         "ocr_confidence": round(effective_conf * 100, 1),
         "blur_score": blur_score,
+        "brightness_score": brightness_score,
         "raw_ocr_text": raw_text,
         "detections_count": len(detections),
         "annotated_image": annotated_img_uri,
