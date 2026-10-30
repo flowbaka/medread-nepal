@@ -122,6 +122,7 @@ async def scan_sample_package(
         "amlod": SAMPLES_DIR / "amlod_5_valid.jpg",
         "expired": SAMPLES_DIR / "pantop_40_expired.jpg",
         "blurry": SAMPLES_DIR / "blurry_package.jpg",
+        "atorva": SAMPLES_DIR / "atorva_10_bs.jpg",
     }
     sample_path = sample_map.get(sample_name)
     if not sample_path or not sample_path.exists():

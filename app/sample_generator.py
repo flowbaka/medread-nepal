@@ -48,3 +48,13 @@ def generate_demo_samples() -> None:
     cv2.putText(img4, "EXP: ../../....", (60, 290), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (150, 150, 150), 2)
     img4_blur = cv2.GaussianBlur(img4, (25, 25), 9)
     cv2.imwrite(str(SAMPLES_DIR / "blurry_package.jpg"), img4_blur)
+
+    # 5. Atorva 10 mg with Bikram Sambat (BS) Expiry Year (e.g. EXP: 05/2085 BS)
+    img5 = np.full((420, 700, 3), (250, 245, 240), dtype=np.uint8)
+    cv2.rectangle(img5, (20, 20), (680, 400), (120, 40, 90), 4)
+    cv2.rectangle(img5, (20, 20), (680, 95), (120, 40, 90), -1)
+    cv2.putText(img5, " ATORVASTATIN TABLETS IP", (35, 68), cv2.FONT_HERSHEY_SIMPLEX, 0.95, (255, 255, 255), 2)
+    cv2.putText(img5, "ATORVA 10 mg", (45, 175), cv2.FONT_HERSHEY_DUPLEX, 1.85, (100, 20, 80), 4)
+    cv2.putText(img5, "For Cholesterol & Heart Protection", (45, 235), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (40, 40, 40), 2)
+    cv2.putText(img5, "B.No: AT-88   MFG: 05/2082   EXP: 05/2085", (45, 325), cv2.FONT_HERSHEY_SIMPLEX, 0.82, (10, 10, 10), 2)
+    cv2.imwrite(str(SAMPLES_DIR / "atorva_10_bs.jpg"), img5)
