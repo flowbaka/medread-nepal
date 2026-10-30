@@ -54,6 +54,36 @@ async def get_known_medicines():
     return {"medicines": KNOWN_MEDICINES}
 
 
+@app.get("/api/health")
+async def health_check():
+    """Simple health check endpoint."""
+    return {"status": "ok", "medicines_loaded": len(KNOWN_MEDICINES)}
+
+
+@app.post("/api/medicines")
+async def add_custom_expected_medicine(
+    brand_en: str = Form(...),
+    name_ne: str = Form(...),
+    default_strength: str = Form("500 mg"),
+    purpose_ne: str = Form("नियमित खाने औषधि"),
+):
+    """Allow a caregiver to save a custom prescription medicine for comparison."""
+    med_id = brand_en.strip().lower().replace(" ", "-")
+    new_med = {
+        "id": med_id,
+        "brand_en": brand_en.strip(),
+        "generic_en": brand_en.strip(),
+        "name_ne": name_ne.strip(),
+        "default_strength": default_strength.strip(),
+        "strength_ne": default_strength.strip(),
+        "purpose_ne": purpose_ne.strip(),
+        "purpose_en": "Custom saved prescription",
+        "keywords": [brand_en.strip().lower(), name_ne.strip()],
+    }
+    KNOWN_MEDICINES.append(new_med)
+    return {"status": "added", "medicine": new_med}
+
+
 @app.post("/api/scan")
 async def scan_medicine_package(
     file: UploadFile = File(...),
