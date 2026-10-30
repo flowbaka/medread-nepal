@@ -92,32 +92,44 @@ def parse_expiry_date(raw_text: str) -> Dict[str, Any]:
     if year and year < 100:
         year += 2000
 
-    if not year or not month or not (1 <= month <= 12):
+    # Convert Nepali Bikram Sambat (BS) years (e.g., 2080-2095 BS) to Gregorian AD (~ -57 years)
+    is_bs_calendar = False
+    if year and 2075 <= year <= 2099:
+        is_bs_calendar = True
+        year_ad = year - 57
+    else:
+        year_ad = year
+
+    if not year_ad or not month or not (1 <= month <= 12):
         return {
             "found": False,
             "raw": "Not clearly visible",
             "formatted_en": "Unclear / Not Found",
             "formatted_ne": "म्याद सकिने मिति स्पष्ट देखिएन",
             "is_expired": None,
+            "expiring_soon": False,
         }
 
     now = datetime.now()
     # Medicine is valid through the end of its expiry month
-    is_expired = (year < now.year) or (year == now.year and month < now.month)
+    is_expired = (year_ad < now.year) or (year_ad == now.year and month < now.month)
+    months_remaining = (year_ad - now.year) * 12 + (month - now.month)
+    expiring_soon = (not is_expired) and (0 <= months_remaining <= 2)
 
     month_ne = NEPALI_MONTHS_EN.get(month, str(month))
-    year_ne = to_nepali_digits(str(year))
-    formatted_en = f"{month:02d}/{year}"
+    year_ne = to_nepali_digits(str(year_ad))
+    formatted_en = f"{month:02d}/{year_ad}" + (f" (BS {year})" if is_bs_calendar else "")
     formatted_ne = f"सन् {year_ne} {month_ne}"
 
     return {
         "found": True,
         "raw": matched_str or formatted_en,
         "month": month,
-        "year": year,
+        "year": year_ad,
         "formatted_en": formatted_en,
         "formatted_ne": formatted_ne,
         "is_expired": is_expired,
+        "expiring_soon": expiring_soon,
     }
 
 
@@ -170,6 +182,13 @@ def evaluate_safety_and_match(
             f"सावधान! यो औषधिको म्याद {expiry_info['formatted_ne']} मा सकिएको छ! यो औषधि नखानुहोस्।"
         )
         status = "DANGER"
+    elif expiry_info.get("expiring_soon") is True:
+        flags_en.append(f"Note: This medicine is expiring very soon ({expiry_info['formatted_en']}).")
+        flags_ne.append(
+            f"ध्यान दिनुहोस्: यो औषधिको म्याद छिट्टै ({expiry_info['formatted_ne']} मा) सकिँदैछ।"
+        )
+        if status == "SAFE":
+            status = "WARNING_VERIFY"
 
     # 5. Compare with Saved Expected Medicine (if user selected one)
     comparison_result = None
