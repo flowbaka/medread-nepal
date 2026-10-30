@@ -59,6 +59,9 @@ def build_spoken_messages(
         else:
             parts_ne.append(f"यसको म्याद {expiry_info['formatted_ne']} सम्म छ। ")
             parts_en.append(f"It is valid until {expiry_info['formatted_en']}. ")
+            if expiry_info.get("expiring_soon"):
+                parts_ne.append("ध्यान दिनुहोस्, यसको म्याद छिट्टै सकिँदैछ। ")
+                parts_en.append("Note that this medicine is expiring soon. ")
     else:
         parts_ne.append("प्याकेटमा म्याद सकिने मिति स्पष्ट देखिएन। ")
         parts_en.append("The expiry date was not clearly visible. ")
