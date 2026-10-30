@@ -82,6 +82,26 @@ def extract_batch_number(raw_text: str) -> Optional[str]:
     return None
 
 
+def extract_mfg_date(raw_text: str) -> Optional[str]:
+    """Extract Manufacturing Date (e.g., MFG: 08/2025, Mfd. Date: 11/2024)."""
+    text_en = to_english_digits(raw_text)
+    pattern = r"(?:mfg(?:\.?\s*date)?|mfd\.?)[\s:.\-]*(\d{1,2}[\s/\-\.]\d{2,4})"
+    m = re.search(pattern, text_en, flags=re.IGNORECASE)
+    if m:
+        return m.group(1).strip()
+    return None
+
+
+def extract_mrp_price(raw_text: str) -> Optional[str]:
+    """Extract Maximum Retail Price (e.g., M.R.P. Rs. 45.00 or NPR 120) if visible."""
+    text_en = to_english_digits(raw_text)
+    pattern = r"(?:m\.?r\.?p\.?|price|npr|rs\.?|रु\.?)[\s:.\-]*(\d+(?:\.\d{1,2})?)"
+    m = re.search(pattern, text_en, flags=re.IGNORECASE)
+    if m:
+        return f"NPR {m.group(1)}"
+    return None
+
+
 def extract_strength(raw_text: str) -> Optional[str]:
     """Extract dosage strength such as '500 mg', '5 mg', '40mg', '10 ml', '५०० मि.ग्रा.'."""
     text_en = to_english_digits(raw_text)
@@ -161,6 +181,8 @@ def process_medicine_image(
     matched_med = match_known_medicine(raw_text)
     extracted_strength = extract_strength(raw_text)
     batch_number = extract_batch_number(raw_text)
+    mfg_date = extract_mfg_date(raw_text)
+    mrp_price = extract_mrp_price(raw_text)
     expiry_info = parse_expiry_date(raw_text)
 
     if matched_med:
@@ -216,6 +238,8 @@ def process_medicine_image(
         "purpose_en": purpose_en,
         "purpose_ne": purpose_ne,
         "expiry": expiry_info,
+        "mfg_date": mfg_date or "N/A",
+        "mrp_price": mrp_price or "N/A",
         "batch_number": batch_number or "N/A",
         "ocr_confidence": round(effective_conf * 100, 1),
         "blur_score": blur_score,
