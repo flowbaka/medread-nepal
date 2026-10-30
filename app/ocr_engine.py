@@ -216,6 +216,7 @@ def process_medicine_image(
         ocr_confidence=effective_conf,
         blur_score=blur_score,
         expected_medicine=expected_medicine,
+        brightness_score=brightness_score,
     )
 
     spoken = build_spoken_messages(

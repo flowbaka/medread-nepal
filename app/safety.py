@@ -140,6 +140,7 @@ def evaluate_safety_and_match(
     ocr_confidence: float,
     blur_score: float,
     expected_medicine: Optional[Dict[str, str]] = None,
+    brightness_score: float = 128.0,
 ) -> Dict[str, Any]:
     """
     Compute overall safety status:
@@ -151,11 +152,21 @@ def evaluate_safety_and_match(
     flags_ne: List[str] = []
     status = "SAFE"  # SAFE | WARNING_VERIFY | DANGER
 
-    # 1. Check blurriness
+    # 1. Check blurriness & lighting
     if blur_score < 45.0:
         flags_en.append("Photo appears blurry. Please hold the camera steady or ask someone to check.")
         flags_ne.append("तस्बिर धमिलो देखिएको छ। कृपया सफा तस्बिर खिच्नुहोस् वा परिवारको सदस्यलाई देखाउनुहोस्।")
         status = "WARNING_VERIFY"
+
+    if brightness_score < 45.0:
+        flags_en.append("Photo is too dark. Please turn on a light or move near a window.")
+        flags_ne.append("तस्बिर अँध्यारो छ। कृपया उज्यालो ठाउँमा राखेर फोटो खिच्नुहोस्।")
+        status = "WARNING_VERIFY"
+    elif brightness_score > 242.0:
+        flags_en.append("Strong glare or overexposure detected on the package.")
+        flags_ne.append("प्याकेटमा धेरै टल्किएको (Glare) देखियो। कृपया थोरै ढल्काएर फोटो खिच्नुहोस्।")
+        if status == "SAFE":
+            status = "WARNING_VERIFY"
 
     # 2. Check medicine name & confidence
     if not med_name_en or med_name_en == "Unknown" or ocr_confidence < 0.68:
